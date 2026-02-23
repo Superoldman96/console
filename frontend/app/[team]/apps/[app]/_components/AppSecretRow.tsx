@@ -4,9 +4,7 @@ import { Disclosure, Switch, Transition } from '@headlessui/react'
 import clsx from 'clsx'
 import {
   FaChevronRight,
-  FaCircle,
   FaCheckCircle,
-  FaTimesCircle,
   FaExternalLinkAlt,
   FaRegEye,
   FaRegEyeSlash,
@@ -26,6 +24,12 @@ import { arraysEqual } from '@/utils/crypto'
 import { toggleBooleanKeepingCase } from '@/utils/secrets'
 import CopyButton from '@/components/common/CopyButton'
 import { MaskedTextarea } from '@/components/common/MaskedTextarea'
+import {
+  PresentIndicator,
+  SameAsProdIndicator,
+  BlankIndicator,
+  MissingIndicator,
+} from './SecretInfoLegend'
 
 const INPUT_BASE_STYLE =
   'w-full flex-1 font-mono custom bg-transparent group-hover:bg-zinc-400/20 dark:group-hover:bg-zinc-400/10 transition ease ph-no-capture text-2xs 2xl:text-sm'
@@ -509,19 +513,14 @@ const AppSecretRowComponent = ({
                 >
                   {env.secret !== null ? (
                     env.secret.value.length === 0 ? (
-                      <span className="w-2 h-2 rounded-full bg-neutral-400 dark:bg-neutral-500" />
+                      <BlankIndicator />
+                    ) : secretIsSameAsProd(env) ? (
+                      <SameAsProdIndicator />
                     ) : (
-                      <span
-                        className={clsx(
-                          'w-2 h-2 rounded-full',
-                          secretIsSameAsProd(env)
-                            ? 'bg-amber-500'
-                            : 'bg-emerald-500'
-                        )}
-                      />
+                      <PresentIndicator />
                     )
                   ) : (
-                    <span className="w-2 h-2 rounded-full ring-2 ring-red-500 ring-inset" />
+                    <MissingIndicator />
                   )}
                 </div>
               </td>
