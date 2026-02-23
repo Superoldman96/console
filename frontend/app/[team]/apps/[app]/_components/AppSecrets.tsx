@@ -846,7 +846,7 @@ export const AppSecrets = ({ team, app }: { team: string; app: string }) => {
                     {appEnvironments?.map((env: EnvironmentType) => (
                       <th
                         key={env.id}
-                        className="group text-center text-2xs 2xl:text-sm font-semibold uppercase tracking-widest py-2"
+                        className="group text-center text-2xs 2xl:text-sm font-semibold uppercase tracking-widest p-2 w-px whitespace-nowrap"
                       >
                         <Link href={`${pathname}/environments/${env.id}`}>
                           <Button variant="outline">
