@@ -38,7 +38,7 @@ This is an example application with some dummy secrets to help you get started w
 
 ### App Descriptions
 
-App descriptions support **Markdown** rendering — making them a great place for developer documentation, runbooks, and notes.
+App descriptions support markdown rendering — making them a great place for developer documentation, runbooks, and notes.
 
 ### What you can do here
 
@@ -53,8 +53,7 @@ App descriptions support **Markdown** rendering — making them a great place fo
 curl -fsSL https://pkg.phase.dev/install.sh | bash
 \`\`\`
 
-\`\`\`
-
+\`\`\`bash
 # Initialize and pull secrets
 phase init
 phase secrets list
