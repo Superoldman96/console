@@ -168,7 +168,7 @@ export const AppEnvironments = ({ appId }: { appId: string }) => {
                       <div className="flex gap-2 xl:gap-4">
                         <div className="w-full min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <div className="font-semibold text-base truncate min-w-0">
+                            <div className="font-semibold font-mono text-base truncate min-w-0">
                               {env.name}
                             </div>
                             {!isReordering && (
