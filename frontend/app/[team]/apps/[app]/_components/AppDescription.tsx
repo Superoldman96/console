@@ -37,7 +37,7 @@ export const AppDescription = ({ appId }: AppDescriptionProps) => {
     <div className="space-y-4 flex flex-col h-40 lg:h-0 lg:min-h-full">
       <div className="shrink-0 pt-2">
         <h1 className="h3 font-semibold text-xl">Readme</h1>
-        <p className="text-neutral-500 text-sm">App description and information</p>
+        <p className="text-neutral-500 text-sm">App description and information.</p>
       </div>
       <AppDescriptionViewer
         appId={appId}
