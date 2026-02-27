@@ -32,13 +32,13 @@ import { graphQlClient as client } from '@/apollo/client'
 
 const APP_VERSION = 1
 
-const EXAMPLE_APP_DESCRIPTION = `## Example App
+const EXAMPLE_APP_README = `## Example App
 
 This is an example application with some dummy secrets to help you get started with Phase.
 
-### App Descriptions
+### App Readme
 
-App descriptions support markdown rendering — making them a great place for developer documentation, runbooks, and notes.
+App readmes support markdown rendering — making them a great place for developer documentation, runbooks, and notes.
 
 ### What you can do here
 
@@ -59,7 +59,7 @@ phase init
 phase secrets list
 \`\`\`
 
-> You can edit this description in **Settings**.
+> You can edit this readme in **Settings**.
 `
 
 // Define the KeyringType interface
@@ -407,7 +407,7 @@ export async function createApplication({
     await createExampleSecrets(newAppId, keyring)
     await client.mutate({
       mutation: UpdateAppInfoOp,
-      variables: { id: newAppId, description: EXAMPLE_APP_DESCRIPTION },
+      variables: { id: newAppId, description: EXAMPLE_APP_README },
     })
   }
 
