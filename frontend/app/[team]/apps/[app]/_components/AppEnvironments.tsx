@@ -10,6 +10,7 @@ import { ManageEnvironmentDialog } from '@/components/environments/ManageEnviron
 import { organisationContext } from '@/contexts/organisationContext'
 import { userHasPermission } from '@/utils/access/permissions'
 import { useMutation } from '@apollo/client'
+import { toast } from 'react-toastify'
 import { LayoutGroup, motion } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -83,19 +84,22 @@ export const AppEnvironments = ({ appId }: { appId: string }) => {
 
   const handleDone = async () => {
     setSaving(true)
-
-    await updateEnvOrder({
-      variables: {
-        appId,
-        environmentOrder: localEnvOrder.map((e) => e.id),
-      },
-      refetchQueries: [{ query: GetAppEnvironments, variables: { appId } }],
-      awaitRefetchQueries: true,
-    })
-
-    setSaving(false)
-    setIsReordering(false)
-    setLocalEnvOrder([])
+    try {
+      await updateEnvOrder({
+        variables: {
+          appId,
+          environmentOrder: localEnvOrder.map((e) => e.id),
+        },
+        refetchQueries: [{ query: GetAppEnvironments, variables: { appId } }],
+        awaitRefetchQueries: true,
+      })
+      setIsReordering(false)
+      setLocalEnvOrder([])
+    } catch (e) {
+      toast.error('Failed to update environment order')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
