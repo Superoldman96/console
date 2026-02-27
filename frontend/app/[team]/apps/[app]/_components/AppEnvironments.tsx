@@ -99,7 +99,7 @@ export const AppEnvironments = ({ appId }: { appId: string }) => {
   }
 
   return (
-    <section className="space-y-4 pt-4">
+    <section className="space-y-4 pt-2">
       <div className="space-y-2">
         <div className="flex items-start justify-between">
           <div>
@@ -144,7 +144,7 @@ export const AppEnvironments = ({ appId }: { appId: string }) => {
         </div>
       </div>
       <LayoutGroup>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 1080p:grid-cols-6 gap-4 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 1080p:grid-cols-6 gap-4">
           {fetching && !appEnvironments?.length
             ? [...Array(3)].map((_, index) => (
                 <EnvironmentCardSkeleton key={`env-skeleton-${index}`} />
@@ -168,7 +168,7 @@ export const AppEnvironments = ({ appId }: { appId: string }) => {
                       <div className="flex gap-2 xl:gap-4">
                         <div className="w-full min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <div className="font-semibold font-mono text-base truncate min-w-0">
+                            <div className="font-semibold text-base truncate min-w-0">
                               {env.name}
                             </div>
                             {!isReordering && (

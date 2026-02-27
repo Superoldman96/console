@@ -134,8 +134,8 @@ export const CreateEnvironmentDialog = (props: { appId: string }) => {
       onClose={() => {}}
       buttonVariant={'outline'}
       buttonContent={
-        <div className="flex items-center gap-2">
-          <FaPlus /> New Environment
+        <div className="flex items-center gap-2 truncate">
+          <FaPlus className="shrink-0" /> <span className="truncate">New Environment</span>
         </div>
       }
       initialFocus={inputRef}

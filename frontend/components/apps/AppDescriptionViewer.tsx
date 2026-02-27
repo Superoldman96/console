@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useContext } from 'react'
 import { Button } from '@/components/common/Button'
 import clsx from 'clsx'
-import { FaEdit, FaExpand, FaInfo } from 'react-icons/fa'
+import { FaEdit, FaExpand } from 'react-icons/fa'
 import GenericDialog from '@/components/common/GenericDialog'
 import { MarkdownViewer } from '@/components/common/MarkdownViewer'
 import Link from 'next/link'
@@ -84,8 +84,9 @@ export const AppDescriptionViewer = ({
         title="App description and documentation"
         dialogTitle={
           <div className="flex justify-between items-center gap-4 pb-2">
-            <div className="text-neutral-500 text-sm font-medium flex items-center gap-2">
-              <FaInfo /> App description and documentation{' '}
+            <div>
+              <h3 className="font-semibold text-lg">App Readme</h3>
+              <p className="text-neutral-500 text-sm">App description and documentation</p>
             </div>
             {showEditButton && (
               <Link

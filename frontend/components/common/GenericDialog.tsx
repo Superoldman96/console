@@ -71,7 +71,7 @@ const GenericDialog = forwardRef(
     return (
       <>
         {buttonContent && (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center max-w-full">
             <Button
               variant={buttonVariant}
               onClick={openModal}

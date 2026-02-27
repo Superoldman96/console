@@ -692,7 +692,7 @@ export const AppSecrets = ({ team, app }: { team: string; app: string }) => {
   }
 
   return (
-    <section className="space-y-4 py-4">
+    <section className="space-y-4">
       <div className="flex items-end justify-between">
         <div className="space-y-1">
           <h1 className="h3 font-semibold text-xl" id="secrets">
@@ -844,7 +844,7 @@ export const AppSecrets = ({ team, app }: { team: string; app: string }) => {
                     {appEnvironments?.map((env: EnvironmentType) => (
                       <th
                         key={env.id}
-                        className="group text-center text-2xs 2xl:text-sm font-semibold uppercase tracking-widest p-2 w-px whitespace-nowrap"
+                        className="group text-center text-2xs 2xl:text-sm font-semibold uppercase p-2 w-px whitespace-nowrap"
                       >
                         <Link href={`${pathname}/environments/${env.id}`}>
                           <Button variant="outline">
