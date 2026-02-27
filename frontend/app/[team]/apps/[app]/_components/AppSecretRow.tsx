@@ -328,9 +328,16 @@ const AppSecretRowComponent = ({
 
   const toggleAccordion = () => (isExpanded ? handleClose() : handleOpen())
 
-  const handleUpdateKey = (k: string) => {
-    const sanitizedK = k.replace(/ /g, '_').toUpperCase()
+  const handleUpdateKey = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { selectionStart } = e.target
+    const sanitizedK = e.target.value.replace(/ /g, '_').toUpperCase()
     updateKey(clientAppSecret.id, sanitizedK)
+    requestAnimationFrame(() => {
+      if (keyInputRef.current) {
+        keyInputRef.current.selectionStart = selectionStart
+        keyInputRef.current.selectionEnd = selectionStart
+      }
+    })
   }
 
   // Permisssions
@@ -480,7 +487,7 @@ const AppSecretRowComponent = ({
                         : 'focus:ring-1 focus:ring-inset focus:ring-zinc-500'
                   )}
                   value={clientAppSecret.key}
-                  onChange={(e) => handleUpdateKey(e.target.value)}
+                  onChange={handleUpdateKey}
                   onClick={(e) => e.stopPropagation()}
                   onFocus={(e) => e.stopPropagation()}
                 />
