@@ -6,7 +6,6 @@ import { GetAppDetail } from '@/graphql/queries/getAppDetail.gql'
 import { organisationContext } from '@/contexts/organisationContext'
 import { AppType } from '@/apollo/graphql'
 import { AppDescriptionViewer } from '@/components/apps/AppDescriptionViewer'
-import { FaInfo } from 'react-icons/fa6'
 
 interface AppDescriptionProps {
   appId: string
