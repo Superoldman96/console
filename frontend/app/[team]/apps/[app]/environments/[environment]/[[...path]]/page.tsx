@@ -63,7 +63,6 @@ import {
   envKeyring,
   EnvKeyring,
 } from '@/utils/crypto'
-import { escapeRegExp } from 'lodash'
 import { EmptyState } from '@/components/common/EmptyState'
 import {
   duplicateKeysExist,
@@ -74,8 +73,20 @@ import {
   saveSort,
   SortOption,
   sortSecrets,
+  SecretFilter,
+  EMPTY_SECRET_FILTER,
+  filterIsActive,
+  secretMatchesFilter,
+  showDynamicUnderFilter,
+  collectSecretTags,
+  parseSecretSearch,
+  secretMatchesSearch,
+  dynamicSearchText,
+  dynamicMatchesSearch,
+  hasRegularOnlyFacet,
 } from '@/utils/secrets'
 import SortMenu from '@/components/environments/secrets/SortMenu'
+import FilterMenu from '@/components/environments/secrets/FilterMenu'
 
 import { DeployPreview } from '@/components/environments/secrets/DeployPreview'
 import { userHasPermission } from '@/utils/access/permissions'
@@ -84,7 +95,7 @@ import { EnvironmentPageSkeleton } from './_components/EnvironmentPageSkeleton'
 import EnvFileDropZone from '@/components/environments/secrets/import/EnvFileDropZone'
 import SingleEnvImportDialog from '@/components/environments/secrets/import/SingleEnvImportDialog'
 import { useWarnIfUnsavedChanges } from '@/hooks/warnUnsavedChanges'
-import { FaBolt } from 'react-icons/fa6'
+import { FaBolt, FaXmark } from 'react-icons/fa6'
 import {
   CreateDynamicSecretDialog,
   CreateDynamicSecretInitialState,
@@ -127,14 +138,14 @@ export default function EnvironmentPath({
 
   // Cross-env replicate flow: ?createRotation=<sourceRotatingSecretId>
   const replicateSourceId = searchParams?.get('createRotation') ?? null
-  const [rotationPrefill, setRotationPrefill] =
-    useState<CreateRotatingSecretInitialState | null>(null)
+  const [rotationPrefill, setRotationPrefill] = useState<CreateRotatingSecretInitialState | null>(
+    null
+  )
   const [fetchRotationCloneSpec] = useLazyQuery(GetRotationCloneSpec)
 
   // Cross-env replicate flow: ?createDynamic=<sourceDynamicSecretId>
   const replicateDynamicSourceId = searchParams?.get('createDynamic') ?? null
-  const [dynamicPrefill, setDynamicPrefill] =
-    useState<CreateDynamicSecretInitialState | null>(null)
+  const [dynamicPrefill, setDynamicPrefill] = useState<CreateDynamicSecretInitialState | null>(null)
   const [fetchDynamicCloneSpec] = useLazyQuery(GetDynamicSecretCloneSpec)
 
   const [envKeys, setEnvKeys] = useState<EnvKeyring | null>(null)
@@ -165,6 +176,11 @@ export default function EnvironmentPath({
     _setSort(option)
     saveSort(option)
   }, [])
+
+  // Filter menu state — intentionally not persisted, so it resets each visit.
+  const [filter, setFilter] = useState<SecretFilter>(EMPTY_SECRET_FILTER)
+  // When the filter menu is open, lift the sticky toolbar above the rows' hover menus.
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false)
 
   const { activeOrganisation: organisation } = useContext(organisationContext)
 
@@ -904,17 +920,29 @@ export default function EnvironmentPath({
     [serverSecretsById]
   )
 
-  const filteredFolders = useMemo(() => {
-    if (searchQuery === '') return folders
-    const re = new RegExp(escapeRegExp(searchQuery), 'i')
-    return folders.filter((f) => re.test(f.name))
-  }, [folders, searchQuery])
+  const parsedSearch = useMemo(() => parseSecretSearch(searchQuery), [searchQuery])
 
-  const filteredSecrets = useMemo(() => {
-    if (searchQuery === '') return clientSecrets
-    const re = new RegExp(escapeRegExp(searchQuery), 'i')
-    return clientSecrets.filter((s) => re.test(s.key) || re.test(s.value))
-  }, [clientSecrets, searchQuery])
+  const availableTags = useMemo(() => collectSecretTags(clientSecrets), [clientSecrets])
+
+  const filteredFolders = useMemo(() => {
+    // Folders carry none of a secret's attributes, so any menu filter or search
+    // qualifier (type/rotating/dynamic/overridden/tag) hides them. Free text still filters by name.
+    if (filterIsActive(filter) || hasRegularOnlyFacet(parsedSearch) || parsedSearch.dynamic)
+      return []
+    if (parsedSearch.text.length === 0) return folders
+    return folders.filter((f) => {
+      const name = f.name.toLowerCase()
+      return parsedSearch.text.every((token) => name.includes(token))
+    })
+  }, [folders, parsedSearch, filter])
+
+  const filteredSecrets = useMemo(
+    () =>
+      clientSecrets.filter(
+        (s) => secretMatchesSearch(s, parsedSearch) && secretMatchesFilter(s, filter)
+      ),
+    [clientSecrets, parsedSearch, filter]
+  )
 
   const filteredAndSortedSecrets = useMemo(
     () => sortSecrets(filteredSecrets, sort),
@@ -948,12 +976,17 @@ export default function EnvironmentPath({
   }, [filteredAndSortedSecrets])
 
   const filteredDynamicSecrets = useMemo(() => {
-    if (searchQuery === '') return dynamicSecrets
-    const re = new RegExp(escapeRegExp(searchQuery), 'i')
+    if (!showDynamicUnderFilter(filter)) return []
     return dynamicSecrets.filter((s) =>
-      re.test(`${s.name}${(s.keyMap ?? []).map((k) => k?.keyName).join('')}`)
+      dynamicMatchesSearch(
+        dynamicSearchText(
+          s.name,
+          (s.keyMap ?? []).map((k) => k?.keyName)
+        ),
+        parsedSearch
+      )
     )
-  }, [dynamicSecrets, searchQuery])
+  }, [dynamicSecrets, parsedSearch, filter])
 
   // Add this (was missing -> ReferenceError: noSecrets is not defined)
   const noSecrets =
@@ -1203,7 +1236,10 @@ export default function EnvironmentPath({
               {!allowDynamicSecrets && <PlanLabel plan={ApiOrganisationPlanChoices.En} />}
             </Button>
 
-            <Button variant="secondary" onClick={() => handleAddSecret(true, '', ApiSecretTypeChoices.Secret, '${')}>
+            <Button
+              variant="secondary"
+              onClick={() => handleAddSecret(true, '', ApiSecretTypeChoices.Secret, '${')}
+            >
               <div className="flex items-center gap-2">
                 <FaLink /> Reference a secret
               </div>
@@ -1316,7 +1352,6 @@ export default function EnvironmentPath({
                           </Menu.Items>
                         </Transition>
                       </>
-
                     )}
                   </Menu>
                 ) : (
@@ -1336,7 +1371,14 @@ export default function EnvironmentPath({
                 )}
               </div>
             </div>
-            <div className="space-y-0 sticky top-0 z-5 bg-zinc-200/50 dark:bg-zinc-900/50 backdrop-blur">
+            <div
+              className={clsx(
+                'space-y-0 sticky top-0 bg-zinc-200/50 dark:bg-zinc-900/50 backdrop-blur',
+                // Normally z-5 so row hover-menus can overlap the header (by design);
+                // raised above the rows (z-20 max) only while the filter menu is open.
+                filterMenuOpen ? 'z-30' : 'z-5'
+              )}
+            >
               <div className="flex items-center w-full justify-between border-b border-zinc-300 dark:border-zinc-700 py-4  backdrop-blur-md">
                 <div className="flex items-center gap-4">
                   <div className="relative flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-md px-2">
@@ -1358,6 +1400,14 @@ export default function EnvironmentPath({
                       )}
                       role="button"
                       onClick={() => setSearchQuery('')}
+                    />
+                  </div>
+                  <div className="relative z-20">
+                    <FilterMenu
+                      filter={filter}
+                      setFilter={setFilter}
+                      availableTags={availableTags}
+                      onOpenChange={setFilterMenuOpen}
                     />
                   </div>
                   <div className="relative z-20">
@@ -1447,7 +1497,7 @@ export default function EnvironmentPath({
               )}
             </div>
 
-            <div className="flex flex-col gap-0 divide-y divide-neutral-500/20 bg-zinc-100 dark:bg-zinc-800 rounded-md shadow-md overflow-hidden">
+            <div className="flex flex-col gap-0 divide-y divide-neutral-500/20 bg-zinc-100 dark:bg-zinc-800 rounded-md shadow-md [&>*:first-child]:rounded-t-md [&>*:last-child]:rounded-b-md">
               <NewFolderMenu />
               <CreateDynamicSecretDialog
                 environment={environment}
@@ -1542,33 +1592,61 @@ export default function EnvironmentPath({
                   )
                 })()}
 
-              {noSecrets && (
-                <EmptyState
-                  title={searchQuery ? `No results for "${searchQuery}"` : 'No secrets here'}
-                  subtitle="Add secrets or folders here to get started"
-                  graphic={
-                    <div className="text-neutral-300 dark:text-neutral-700 text-7xl text-center">
-                      {searchQuery ? <MdSearchOff /> : <MdPassword />}
-                    </div>
-                  }
-                >
-                  {searchQuery ? (
-                    userCanCreateSecrets &&
-                    normalizeKey(searchQuery) && (
-                      <Button variant="primary" onClick={handleCreateSecretFromSearch}>
-                        <FaPlus /> Create &quot;{normalizeKey(searchQuery)}&quot;
-                      </Button>
-                    )
-                  ) : (
-                    <NewSecretMenu />
-                  )}
-                  {!searchQuery && (
-                    <div className="w-full max-w-screen-sm h-40 rounded-lg">
-                      <EmptyStateFileImport />
-                    </div>
-                  )}
-                </EmptyState>
-              )}
+              {noSecrets &&
+                (() => {
+                  const menuActive = filterIsActive(filter)
+                  const hasQualifiers = hasRegularOnlyFacet(parsedSearch) || parsedSearch.dynamic
+                  const anyFilterActive = menuActive || searchQuery.trim() !== ''
+                  // A plain keyword search (no menu filter, no qualifiers) still offers "Create".
+                  const pureTextSearch = searchQuery.trim() !== '' && !menuActive && !hasQualifiers
+                  return (
+                    <EmptyState
+                      title={
+                        pureTextSearch
+                          ? `No results for "${searchQuery}"`
+                          : anyFilterActive
+                            ? 'No matching secrets'
+                            : 'No secrets here'
+                      }
+                      subtitle={
+                        anyFilterActive
+                          ? 'Try adjusting your search or filters'
+                          : 'Add secrets or folders here to get started'
+                      }
+                      graphic={
+                        <div className="text-neutral-300 dark:text-neutral-700 text-7xl text-center">
+                          {anyFilterActive ? <MdSearchOff /> : <MdPassword />}
+                        </div>
+                      }
+                    >
+                      {pureTextSearch ? (
+                        userCanCreateSecrets &&
+                        normalizeKey(searchQuery) && (
+                          <Button variant="primary" onClick={handleCreateSecretFromSearch}>
+                            <FaPlus /> Create &quot;{normalizeKey(searchQuery)}&quot;
+                          </Button>
+                        )
+                      ) : anyFilterActive ? (
+                        <Button
+                          variant="primary"
+                          onClick={() => {
+                            setFilter(EMPTY_SECRET_FILTER)
+                            setSearchQuery('')
+                          }}
+                        >
+                          <FaXmark /> Clear filters
+                        </Button>
+                      ) : (
+                        <NewSecretMenu />
+                      )}
+                      {!anyFilterActive && (
+                        <div className="w-full max-w-screen-sm h-40 rounded-lg">
+                          <EmptyStateFileImport />
+                        </div>
+                      )}
+                    </EmptyState>
+                  )
+                })()}
             </div>
           </div>
         )}
